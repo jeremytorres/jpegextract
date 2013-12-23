@@ -1,5 +1,3 @@
-# jpegextract -- A camera RAW file utility
-
 [![Build Status](https://travis-ci.org/jeremytorres/jpegextract.png)](https://travis-ci.org/jeremytorres/jpegextract)
 
 ## Overview

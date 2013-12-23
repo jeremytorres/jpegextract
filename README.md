@@ -1,4 +1,7 @@
 # jpegextract -- A camera RAW file utility
+
+[![Build Status](https://travis-ci.org/jeremytorres/jpegextract.png)](https://travis-ci.org/jeremytorres/jpegextract)
+
 ## Overview
 jpegextract is a command-line utility to extract the embedded JPEGs from a camera RAW file.  It's a GO language command based on [RawParser](https://github.com/jeremytorres/rawparser).  There are existing tools that perform this or similar functionality; however, the reasons for creating this tool:
 

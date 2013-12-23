@@ -25,24 +25,35 @@ package main
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
 func TestDirectoryValid(t *testing.T) {
 	// 1. Test directory existence
 
+	const pathSep = string(os.PathSeparator)
+
+	tmpDir := os.TempDir()
+
+	if !strings.HasSuffix(tmpDir, pathSep) {
+		tmpDir += pathSep
+	}
+
+	t.Logf("TmpDir: %s\n", tmpDir)
+
 	// create tmp dir and delete it
-	dirName := os.TempDir() + "NefParserTest"
-	err := os.Mkdir(dirName, os.ModeDir)
+	dirName := tmpDir + "ParserTest"
+	err := os.MkdirAll(dirName, 0755)
 	if err != nil {
-		t.Errorf("Unable to create test tmp dir: '%s'", dirName)
+		t.Fatalf("Unable to create test tmp dir: '%s'.  Error %v\n", dirName, err)
 	}
 	t.Logf("Created tmp directory '%s'", dirName)
 
 	// delete directory
 	err = os.Remove(dirName)
 	if err != nil {
-		t.Errorf("Unable to delete tmp dir: '%s'", dirName)
+		t.Fatalf("Unable to delete tmp dir: '%s'", dirName)
 	}
 	t.Logf("Deleted tmp directory '%s'", dirName)
 
@@ -53,11 +64,17 @@ func TestDirectoryValid(t *testing.T) {
 	}
 
 	// 2. Test path points to a directory
-	fileName := os.TempDir() + "NefParserTest"
+	err = os.MkdirAll(dirName, 0755)
+	if err != nil {
+		t.Fatalf("Unable to create test tmp dir: '%s'", dirName)
+	}
+	t.Logf("Created tmp directory '%s'", dirName)
+
+	fileName := dirName + pathSep + "ParserTestFile.txt"
 	_, err = os.Create(fileName)
 	defer os.Remove(fileName)
 	if err != nil {
-		t.Errorf("Unable to create test tmp file: '%s'", fileName)
+		t.Fatalf("Unable to create test tmp file: '%s'.  Error %v\n", fileName, err)
 	}
 	t.Logf("Created test tmp file: '%s'", fileName)
 

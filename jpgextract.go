@@ -21,7 +21,7 @@
  WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-// Command utilizing the RawFileparser library for parsing Nikon Electronic Files (RawFiles).
+// Command utilizing the rawparser library for extracting jpegs from RAW iles.
 // The embedded JPEGs are extracted and optionally:
 // (1) rotated via oritenation provided in RawFile EXIF info;
 //
@@ -39,7 +39,6 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
-	"runtime/pprof"
 	"strconv"
 	"strings"
 	"time"
@@ -278,17 +277,7 @@ func doProcess() int {
 func setup() {
 	success := processCli()
 	if success {
-		/*
-			// don't allow num of channels > logical cores
-			if numOfRoutines > runtime.NumCPU() {
-				log.Printf("Note: Processing %d concurrently, as %d exceeds CPU count of host.\n",
-					runtime.NumCPU(), numOfRoutines)
-				numOfRoutines = runtime.NumCPU()
-			}
-
-		*/
 		runtime.GOMAXPROCS(numOfRoutines)
-
 		initParsers()
 	} else {
 		exitWithErr()
@@ -296,13 +285,6 @@ func setup() {
 }
 
 func main() {
-	f, err := os.Create("/tmp/jpgextract_cpu.prof")
-	if err != nil {
-		log.Fatal(err)
-	}
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
-
 	t0 := time.Now()
 
 	setup()

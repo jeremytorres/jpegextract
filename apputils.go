@@ -49,9 +49,8 @@ func isImagicConvertInPath(bin string) bool {
 	err := cmd.Start()
 	if err != nil {
 		return false
-	} else {
-		return true
 	}
+	return true
 }
 
 func validateUserDir(dirStr string) (isValid bool, errStr string) {

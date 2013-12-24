@@ -86,11 +86,12 @@ func TestDirectoryValid(t *testing.T) {
 }
 
 func TestIsImageMagicConvertInPath(t *testing.T) {
-	// Test the command recoginition in lieu of an actual 'convert' image
-	exists := isImagicConvertInPath("echo")
+	// 'convert' is the imagemagic command name
+	exists := isImagicConvertInPath("convert")
 	if !exists {
 		t.Fail()
 	}
+	// Test the command recoginition in lieu of an actual 'convert' image
 	exists = isImagicConvertInPath("blah")
 	if exists {
 		t.Fail()

@@ -99,7 +99,7 @@ var (
 func processFilesConcurrent(rp *RawFileParserPair, c chan<- bool) {
 
 	go func(rp *RawFileParserPair, c chan<- bool) {
-		rawfile, err := rp.parser.ProcessFile(&rawparser.RawFileInfo{rp.file, destDir, quality, numOfRoutines})
+		rawfile, err := rp.parser.ProcessFile(&rawparser.RawFileInfo{rp.file, destDir, quality})
 		if err != nil {
 			log.Printf("Error processing file: '%s' error: %v\n", rp.file, err)
 		} else {

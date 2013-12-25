@@ -16,7 +16,7 @@ jpegextract is a command-line utility to extract the embedded JPEGs from a camer
     * [TurboJpeg](http://www.libjpeg-turbo.org/)
     * If you have many JPEGs to extract, TurboJpeg provides noticebly better performance.  See performance [observations](#performance).
  
-### Why not use GO's [image/jpeg](http://golang.org/pkg/image/jpeg/) package as the default?
+### Why not only use GO's [image/jpeg](http://golang.org/pkg/image/jpeg/) package?
 I originally planned on making the utility pure GO. In fact for small batches of images, image/jpeg does the job.  However, when you have a _lot_ of files to process, C-based image libraries are hard to beat with respect to processing time--even more, using TurboJpeg with its optimized processor instructions.  See [performance](#performance-tests) to further understand why.
 
 ## Usage
@@ -26,8 +26,7 @@ I originally planned on making the utility pure GO. In fact for small batches of
 go get github.com/jeremytorres/jpegextract
 ```
 
-   * jpegextract is command-line executable
-   * rawparser is the package containing the parsing logic for various camera RAW files
+   * jpegextract is command-line executable: $GOPATH/bin/jpegextract
    
 * Invoke `jpegextract`
     * Get help.  Displays information on parameters and defaults.

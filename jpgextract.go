@@ -41,15 +41,9 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
-
-// RawFileParserPair is a struct for containing a list of files
-// for a specific parser.
-type RawFileParserPair struct {
-	file   string
-	parser rawparser.RawParser
-}
 
 const (
 	// RawTypesKey is the constant representing the command line argument for the RAW file
@@ -94,6 +88,7 @@ var (
 	}
 )
 
+/*
 // processFilesConcurrent processes RawFiles concurrently, based on the number goroutines
 // specified.
 func processFilesConcurrent(rp *RawFileParserPair, c chan<- bool) {
@@ -124,6 +119,7 @@ func processFilesConcurrent(rp *RawFileParserPair, c chan<- bool) {
 		c <- true
 	}(rp, c)
 }
+*/
 
 func isRawFileExtValid(ext string) bool {
 	for _, validExt := range validParserKeys {
@@ -231,45 +227,70 @@ func doProcess() int {
 	log.Printf("RawTypes: %v SourceDirs: %v DestinationDir: %s JPEG Quality: %d Rotate Images: %v\n",
 		rawFileExts, srcDirs, destDir, quality, rotate)
 
+	var done sync.WaitGroup
 	total := 0
-	done := make(chan bool)
+	finish := make(chan struct{})
 
 	// process all src dirs
 	for _, dir := range srcDirs {
+
 		// process all raw file types
 		for i, rawType := range rawFileExts {
+
 			globPattern := dir + "*." + rawType
 			files, _ := getFilesForExt(globPattern)
 			fileCnt := len(files)
+
+			log.Println("Dir: ", dir)
+
+			parser := parsers.GetParser(rawType)
 
 			if fileCnt > 0 {
 				log.Printf("Raw Type: %s ==> Processing '%s' %d files with %d NumCPU:\n",
 					rawFileExts[i], dir, len(files), runtime.NumCPU())
 
-				drainCnt := 1
-				routinesActive := 0
+				for _, file := range files {
+					done.Add(1)
 
-				for j := 0; j < fileCnt; j++ {
-					// keep the specified number of go routines active
-					if routinesActive == numOfRoutines {
-						// Completion of routines occur in any order.  Count the completion signals
-						// by draining channel after launching routines.
-						// Drain the channel.
-						for c := 0; c < drainCnt; c++ {
-							<-done // wait for task to complete
-							routinesActive--
+					go func(c chan struct{}) {
+						rawfile, err := parser.ProcessFile(&rawparser.RawFileInfo{file, destDir, quality})
+						if err != nil {
+							log.Printf("Error processing file: '%s' error: %v\n", files, err)
+						} else {
+							if rotate && rawfile.JpegOrientation != 0.0 {
+								// rotate jpeg
+								go func(fileName string, radiansCw float64) {
+									degrees := radiansCw * (180 / math.Pi)
+									log.Printf("Rotating image %f degrees for jpeg: '%s'\n", degrees, fileName)
+									cmd := exec.Command(ImageMagicConvertBin, "-rotate", strconv.FormatFloat(degrees, 'f', 2, 64), fileName, fileName)
+									err := cmd.Start()
+									if err != nil {
+										log.Fatal(err)
+									}
+									err = cmd.Wait()
+									if err != nil {
+										log.Printf("Command finished with error: %v", err)
+									}
+								}(rawfile.JpegPath, rawfile.JpegOrientation)
+							}
 						}
-					}
 
-					processFilesConcurrent(&RawFileParserPair{files[j], parsers.GetParser(rawType)}, done)
-					routinesActive++
+						select {
+						case <-c:
+						}
+						// signal completion of work
+						done.Done()
+
+					}(finish)
 				}
 				total += fileCnt
 			}
 		}
 	}
 
-	close(done)
+	close(finish)
+
+	done.Wait()
 
 	return total
 }

@@ -88,39 +88,6 @@ var (
 	}
 )
 
-/*
-// processFilesConcurrent processes RawFiles concurrently, based on the number goroutines
-// specified.
-func processFilesConcurrent(rp *RawFileParserPair, c chan<- bool) {
-
-	go func(rp *RawFileParserPair, c chan<- bool) {
-		rawfile, err := rp.parser.ProcessFile(&rawparser.RawFileInfo{rp.file, destDir, quality})
-		if err != nil {
-			log.Printf("Error processing file: '%s' error: %v\n", rp.file, err)
-		} else {
-			if rotate && rawfile.JpegOrientation != 0.0 {
-				// rotate jpeg
-				go func(fileName string, radiansCw float64) {
-					degrees := radiansCw * (180 / math.Pi)
-					log.Printf("Rotating image %f degrees for jpeg: '%s'\n", degrees, fileName)
-					cmd := exec.Command(ImageMagicConvertBin, "-rotate", strconv.FormatFloat(degrees, 'f', 2, 64), fileName, fileName)
-					err := cmd.Start()
-					if err != nil {
-						log.Fatal(err)
-					}
-					err = cmd.Wait()
-					if err != nil {
-						log.Printf("Command finished with error: %v", err)
-					}
-				}(rawfile.JpegPath, rawfile.JpegOrientation)
-			}
-		}
-		// signal completion of work
-		c <- true
-	}(rp, c)
-}
-*/
-
 func isRawFileExtValid(ext string) bool {
 	for _, validExt := range validParserKeys {
 		if ext == validExt {
@@ -229,28 +196,43 @@ func doProcess() int {
 
 	var done sync.WaitGroup
 	total := 0
+
+	// Initialize buffered channel (semaphore) to numOfRoutines.
+	// This keeps the memory foot print as low as possible, while
+	// still processing as much as specified.
+	sem := make(chan int, numOfRoutines)
+	for i := 0; i < numOfRoutines; i++ {
+		sem <- 1
+	}
+
+	// Channel used by go routines to signal completion.
 	finish := make(chan struct{})
 
 	// process all src dirs
 	for _, dir := range srcDirs {
 
-		// process all raw file types
+		// Invoke all registered parsers for each directory.
 		for i, rawType := range rawFileExts {
 
 			globPattern := dir + "*." + rawType
 			files, _ := getFilesForExt(globPattern)
 			fileCnt := len(files)
 
+			// get parser for specific type
 			parser := parsers.GetParser(rawType)
 
 			if fileCnt > 0 {
 				log.Printf("Raw Type: %s ==> Processing '%s' %d files with %d NumCPU:\n",
-					rawFileExts[i], dir, len(files), runtime.NumCPU())
+					rawFileExts[i], dir, fileCnt, runtime.NumCPU())
 
+				// Process all files using semaphore to throttle the number of
+				// go routines being created.
 				for _, file := range files {
-					done.Add(1)
+					// wait for sem queue to drain
+					<-sem
 
-					go func(c chan struct{}, file string) {
+					// go routine for processing files in parallel
+					go func(file string) {
 						rawfile, err := parser.ProcessFile(&rawparser.RawFileInfo{file, destDir, quality})
 						if err != nil {
 							log.Printf("Error with file: '%s'.  Error: %v\n", file, err)
@@ -273,21 +255,26 @@ func doProcess() int {
 							}
 						}
 
-						select {
-						case <-c:
-						}
+						// allow next file to be processed
+						sem <- 1
+
 						// signal completion of work
+						select {
+						case <-finish:
+						}
 						done.Done()
 
-					}(finish, file)
+					}(file)
 				}
 				total += fileCnt
 			}
 		}
 	}
 
+	// close channel...only receivers now
 	close(finish)
 
+	// wait for all active go routines to complete
 	done.Wait()
 
 	return total
@@ -301,6 +288,7 @@ func setup() {
 	} else {
 		exitWithErr()
 	}
+
 }
 
 func main() {

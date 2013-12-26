@@ -20,13 +20,27 @@ jpegextract is a command-line utility to extract the embedded JPEGs from a camer
 I originally planned on making the utility pure GO. In fact for small batches of images, image/jpeg does the job.  However, when you have a _lot_ of files to process, C-based image libraries are hard to beat with respect to processing time--even more, using TurboJpeg with its optimized processor instructions.  See [performance](#performance-tests) to further understand why.
 
 ## Usage
-* Obtain the utility
+* Obtain the utility.  The following will retrieve _jpegextract_ and any dependencies and will build the _default_ executable.  The _default_ uses GO's image/jpeg package.
  
 ```go
 go get github.com/jeremytorres/jpegextract
 ```
 
    * jpegextract is command-line executable: $GOPATH/bin/jpegextract
+
+* To utilize libjpeg or turbojpeg:
+
+```bash
+cd $GOPATH/src/github.com/jeremytorres/jpegextract
+
+# Build using libjpeg
+# See jpeglibjpeg.go for CFLAGS and LDFLAGS and update for your environment.  # The defaults for Linux and Mac OS (10.9) should work.
+go build -tags jpeg
+
+# Build using turbojpeg
+# See jpegturbojpeg.go for CFLAGS and LDFLAGS and update for your environment.  # The defaults for Linux and Mac OS (10.9) should work.
+go build -tags turbojpeg
+```
    
 * Invoke `jpegextract`
     * Get help.  Displays information on parameters and defaults.

@@ -104,7 +104,7 @@ func processCli() bool {
 
 	app := cli.NewApp()
 	app.Name = "jpgextract"
-	app.Usage = "Processes RAW files and extracts JPEGs and optionally create a SQLite database."
+	app.Usage = "Processes RAW files and extracts JPEGs."
 	app.Version = AppVersionKey
 	app.Author = "Jeremy Torres"
 	app.Flags = []cli.Flag{
@@ -230,6 +230,9 @@ func doProcess() int {
 				for _, file := range files {
 					// wait for sem queue to drain
 					<-sem
+
+					// add go routine to wait group
+					done.Add(1)
 
 					// go routine for processing files in parallel
 					go func(file string) {

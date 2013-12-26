@@ -241,8 +241,6 @@ func doProcess() int {
 			files, _ := getFilesForExt(globPattern)
 			fileCnt := len(files)
 
-			log.Println("Dir: ", dir)
-
 			parser := parsers.GetParser(rawType)
 
 			if fileCnt > 0 {
@@ -252,10 +250,10 @@ func doProcess() int {
 				for _, file := range files {
 					done.Add(1)
 
-					go func(c chan struct{}) {
+					go func(c chan struct{}, file string) {
 						rawfile, err := parser.ProcessFile(&rawparser.RawFileInfo{file, destDir, quality})
 						if err != nil {
-							log.Printf("Error processing file: '%s' error: %v\n", files, err)
+							log.Printf("Error with file: '%s'.  Error: %v\n", file, err)
 						} else {
 							if rotate && rawfile.JpegOrientation != 0.0 {
 								// rotate jpeg
@@ -281,7 +279,7 @@ func doProcess() int {
 						// signal completion of work
 						done.Done()
 
-					}(finish)
+					}(finish, file)
 				}
 				total += fileCnt
 			}

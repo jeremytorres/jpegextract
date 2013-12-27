@@ -8,11 +8,13 @@ jpegextract is a command-line utility to extract the embedded JPEGs from a camer
 3. Experiment with GO's "C" package and interfacing with existing C libraries.
 
 ## Dependencies
-* GO 1.2 (_maybe_ older GO 1.1.2? but not tested)
-* [libjpeg](http://www.ijg.org)
-* [ImageMagick](http://www.imagemagick.org/)
+* Default build (GO image/jpeg)
+    * GO 1.2 (_maybe_ older GO 1.1.2? but not tested)
     * `convert` utility Required for rotating JPEGs
-* Optional (highly-recommended):
+* Optional
+    * [libjpeg](http://www.ijg.org)
+    * [ImageMagick](http://www.imagemagick.org/)
+* Highly recommended
     * [TurboJpeg](http://www.libjpeg-turbo.org/)
     * If you have many JPEGs to extract, TurboJpeg provides noticebly better performance.  See performance [observations](#performance).
  

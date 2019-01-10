@@ -62,7 +62,7 @@ go build -tags turbojpeg
 The quality parameter is the JPEG compressors "quaility" value.  This is a value from 0-100, where 0 is the lowest compression quality.  This value has a dramatic impact on overall processing time and the size of the resulting extracted JPEG.  A good rule of thumb: 80 or less for really good JPEGs.  If storage size is of concern, us a smaller value.
 
 ### `--num-routines` parameter
-This defines the max number of files to process concurrently (setting GOMAXPROCS internally).  In the above example, 8 files would be processed simultaneously.  It's recommended to set this parameter to the maximum number of logical cores of the host machine; however, your mileage _will_ vary!  Disk IO performance will drive the perforance gains of this parameter, so experiment with this parameter to tweak for your environemt.
+This defines the max number of files to process concurrently (setting GOMAXPROCS internally).  In the above example, 8 files would be processed simultaneously.  It's recommended to set this parameter to the maximum number of logical cores of the host machine; however, your mileage _will_ vary!  Disk IO performance will drive the performance gains of this parameter, so experiment with this parameter to tweak for your environemt.
 
 ### Current RAW file format support
 * Nikon NEF
